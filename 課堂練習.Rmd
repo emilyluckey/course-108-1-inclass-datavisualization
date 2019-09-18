@@ -1,5 +1,7 @@
 ---
-
+title: "Untitled"
+author: "李靜怡"
+date: "9/18/2019"
 ---
 
 ```{r}
@@ -9,5 +11,151 @@ font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
 showtext_auto(enable=TRUE) #啟用字體
 theme_set(theme_classic())
 knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.showtext=T)
+```
+
+```{r}
+StuList <- list(
+  次序=c(1,2,3,4,5,6,7,8),
+  學號=c(172,214,322,425,517,833,752,114),
+  姓名=c("小明","大雄","胖虎","小新","大白","阿華","小英","阿美"),
+  性別=c("男","男","男","女","女","男","女","男"),
+  成績=c(80,42,90,82,50,77,30,90)
+  )
+StuList
+as.data.frame(StuList) -> StuDFfromList
+StuDFfromList
+```
+
+```{r}
+library(dplyr)
+StuDF <- data.frame(
+  次序=c(1,2,3,4,5,6,7,8),
+  學號=c(172,214,322,425,517,833,752,114),
+  姓名=c("小明","大雄","胖虎","小新","大白","阿華","小英","阿美"),
+  性別=c("男","男","男","女","女","男","女","男"),
+  成績=c(80,42,90,82,50,77,30,90)
+  )
+str(StuDF)
+```
+
+```{r}
+library(readr)
+collegeData <- read_csv("https://raw.githubusercontent.com/tpemartin/github-data/master/103_student.csv")
+
+#檢查變數結構
+str(collegeData)
+
+#前4筆
+collegeData[1:4,]
+
+#後3筆
+slice(collegeData,(n()-3):(n()))
+
+#中間第101到110筆
+collegeData[101:110,]
+```
+
+```{r}
+collegeData %>%
+  mutate(
+    男生人數 = sum())
+  )
+
+
+library(stringr)
+
+colnames(collegeData)
+```
+
+```{r}
+load(url("https://www.dropbox.com/s/duh5aaqgl2f5m3z/loopTranscriptData.Rda?raw=1"))
+```
+
+```{r}
+collegeData[101:110,]
+collegeData[str_detect(colnames(collegeData),"男生")]
+library(dplyr)
+
+colnames(collegeData)[c(5,7,9,11)] -> 一到四年級男生
+
+一到四年級男生[1:4]
+
+collegeData %>%
+  mutate(
+    男生人數 = 
+  )
+
+```
+
+```{r}
+StuDF
+mutate(StuDF,
+        平均成績=mean(成績),
+        最高分=max(成績),
+        最低分=min(成績))
+```
+
+```{r}
+StuDF %>%
+  filter(
+    性別 == "女"
+  ) %>%
+  summarise(
+    平均成績 = mean(成績),
+    最高分 = max(成績),
+    最低分 = min(成績)
+  )
+```
+
+```{r}
+#1
+str_detect(
+  collegeData$縣市名稱,
+  "30"
+) %>%
+  collegeData[.,]
+
+#2
+grep(
+  "01",
+  collegeData$縣市名稱
+)
+```
+
+```{r}
+collegeData %>%
+  group_by(縣市名稱,體系別,等級別) %>%
+  summarise(
+    一年級男生人數 = sum(一年級男生),
+    一年級女生人數 = sum(一年級女生),
+    學校數目 = n()
+  )
+```
+
+```{r}
+#計算每位學生每學期的平均成績
+transcriptDataFinal %>%
+  mutate(
+    學年學期 = str_c(學年,"-",學期)
+  ) %>%
+  group_by(學號,學年學期) %>%
+  summarise(
+    平均成績 = sum(學期成績*學分數)/sum(學分數)
+  )
+
+#計算每位學生每學期學分數在必/選/通 三類的學分數比重
+transcriptDataFinal %>%
+  mutate(
+    學年學期 = str_c(學年,"-",學期)
+  ) %>%
+  group_by(學號,學年學期) %>%
+  summarise(
+    必修 = ,
+    選修 = ,
+    通識 = 
+  )
+  
+
+學屆為100（即100學年入學）的學生，各系學生在學所修總學分數之中位數，何系最高？
 ```
 
