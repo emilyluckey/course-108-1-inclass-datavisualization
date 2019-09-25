@@ -1,7 +1,7 @@
 ---
 title: "Untitled"
 author: "李靜怡"
-date: "9/18/2019"
+date: "9/25/2019"
 ---
 
 ```{r}
@@ -157,5 +157,67 @@ transcriptDataFinal %>%
   
 
 學屆為100（即100學年入學）的學生，各系學生在學所修總學分數之中位數，何系最高？
+```
+
+```{r}
+library(readr)
+df_taoyuanMarriage <- read_csv("https://data.tycg.gov.tw/opendata/datalist/datasetMeta/download?id=f95d1a33-ec56-44c5-a9ec-3afba8157e39&rid=fd2070ef-7431-4f9c-bc3a-82d7bfbcd2fb")
+```
+
+```{r}
+df_taoyuanMarriage %>%
+  gather(
+    grep("月$",colnames(.)),
+    key = "年份", value = "對數"
+  ) 
+```
+
+```{r}
+download_id_64a896aa_a6aa_4362_90fb_4270d90ff625_rid_85e11adb_c228_4b57_a7fd_1d99fb31129c <- read_csv("https://data.tycg.gov.tw/opendata/datalist/datasetMeta/download?id=64a896aa-a6aa-4362-90fb-4270d90ff625&rid=85e11adb-c228-4b57-a7fd-1d99fb31129c")
+```
+
+```{r}
+library(readr)
+subsetDataTWbank <- read_csv("https://www.dropbox.com/s/t8ulj3d7cgl8jh5/subsetDataTWbank.csv?dl=1")
+```
+
+```{r}
+library(ggplot2)
+ggplot(subsetDataTWbank)+
+  geom_point(
+    aes(x=西元年月,y=`定存利率-一個月-固定`)
+  ) +
+  geom_line(
+    aes(x=西元年月,y=`定存利率-一個月-固定`)
+  ) 
+
+subsetDataTWbank %>%
+  gather(
+    `定存利率-一個月-固定`,`定存利率-二年期-固定`,`定存利率-三年期-固定`,
+    key = "期數", value = "利率"
+  ) %>%
+  mutate(
+    期數 = factor(期數,levels=c("定存利率-一個月-固定","定存利率-二年期-固定","定存利率-三年期-固定"))
+  ) %>%
+  ggplot() +
+  geom_line(
+    aes(x=西元年月,y=利率,color=期數),
+    size=0.5
+  )
+```
+
+```{r}
+twCalendar <- c("民國88年11月1日","民國88年12月1日","民國89年1月1日")
+
+twCalendar %>%
+  str_extract_all("[:digit:]+") %>%
+  # 將每個日期的「年」數字加上1991再合併年月日成為`yyyy-mm-dd`格式
+  purrr::map_chr(
+             function(x) {
+               x1=as.integer(x[[1]])+1911
+               x[[1]]=as.character(x1)
+               stringr::str_c(x,collapse="-")
+             }
+             ) -> westernCalendar
 ```
 
