@@ -1,18 +1,16 @@
 ---
-title: "每週一圖作業範例"
+title: "每週一圖作業"
 output: html_document
 params:
-  組員: ["小明","小花"]  
-  學號: ["410773818","410773293"]
+  組員: ["李靜怡"]  
+  學號: ["410773095"]
 ---
 
 #### 環境設定
 
 以下為老師執行時一定會存在的環境設定
 ```{r basic setup, message=FALSE, echo=TRUE, eval=T}
-library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr);
-library(tidyr); library(showtext)
-
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(magrittr)
 font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
 showtext_auto(enable=TRUE) #啟用字體
 theme_set(theme_classic())
@@ -34,43 +32,70 @@ knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.show
 資料檔引入到進入作圖前的資料處理請寫在下面區塊，分二部份：
 
   * 資料處理  
-  * 作圖用資料物件生成
+  * 作圖用資料物件生成(最後形成作圖資料物件graphData)
   
 ```{r data cleaning, echo=TRUE, eval=T}
-# 資料引入
-load("example_data.Rda")
-
-# 資料處理
-employmentLaborForceData1 <- dataList$勞動力$data
-employmentLaborForceData1 %>%
-  tidyr::gather(`年平均勞動力`,`年平均就業人口`, key="類別",value="人數（千）") %>%
-  mutate(
-    年=as.integer(as.character(年))
-  ) -> graphData_employment
-
-# 作圖用資料物件生成：處理好可進行作圖的資料請存在一個名為graphData的list物件裡
+load("X107indicators.Rda")
 graphData <- list()
-graphData$graphData_employment <- graphData_employment
+
+X107indicators[-c(35:36),] %>%
+  .[-c(1:2),] %>%
+  .[,-2] %>%
+  gather(
+    -1,
+    key = 各級學校, value = 平均每生分攤經費
+  ) -> graphData$X107indicators
+
+graphData$X107indicators$學年度 %<>% as.numeric()
+graphData$X107indicators$平均每生分攤經費 %<>% as.numeric()
 ```
 
 #### 繪圖程式
 
 ```{r graph, echo=T, eval=T}
-graphData$graphData_employment %>%
-  filter(年>=1995) %>%
+graphData$X107indicators %>%
   ggplot()+
   geom_line(
-    aes(
-        x=年,
-        y=`人數（千）`,
-        group=類別,
-        color=類別),
-    size=1
-  )
+    aes(x=學年度, y=平均每生分攤經費, color = 各級學校) 
+  ) +
+  scale_color_discrete(breaks = c(
+    "大學及學院",
+    "專科學校",
+    "高中",
+    "高職",
+    "國中",
+    "國小",
+    "幼兒園")) +
+  labs(title = "各級學校平均每生分攤經費",
+       caption = "資料來源: 中華民國統計資訊網",
+       subtitle="單位：每人平均經費(元)") +
+  theme(
+    plot.title = element_text(size = 18, hjust = 0.5),
+    plot.caption = element_text(size = 10,
+                                color = "#6D6D6D"),
+    plot.subtitle = element_text(size = 10),
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_line(color = "grey90")
+  ) +
+  geom_hline(aes(yintercept=100000),
+             alpha=0.3,linetype="dashed") +
+  geom_vline(aes(xintercept=97),
+             alpha=0.3,linetype="dashed") +
+  scale_y_continuous(
+    breaks = c(50000,100000,150000,200000),
+    labels = c("50,000","100,000","150,000","200,000")
+  ) ->finalplot
+finalplot
 ```
 
 #### 設計說明
 說明想傳達的訊息（必要）及設計想法（非必要）。寫在***之後
 *** 
+此圖為75學年度以後各級學校平均學生分攤經費(各級學校平均每生分攤經費＝各級學校教育經費支出預算數/各級學校學生人數)，可以看到大學及學院一直都是平均經費最多的，但專科學校的經費和其他各級學校相比並不突出，令人意外的是高職的人均經費長年以來皆高過高中，其原因有待進一步了解。
 
-圖為台灣1995年之後的勞動力與就業人口趨勢，95年勞動力人口為9百21萬人，就業人口為9百零4萬5千人，就業比例（即就業率）為百分之98.21； ，到2018年勞動力人口為1千1百87萬4千人，就業人口為1千1百43萬4千人，就業率為百分之96.29。
+有趣的是在97學年度，專科學校、高中、國小及幼兒園的人均經費出現了交叉口。
+
+```{r}
+finalplot %>%
+  ggplotly()
+```

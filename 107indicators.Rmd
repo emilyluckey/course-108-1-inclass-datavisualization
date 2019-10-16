@@ -1,0 +1,6 @@
+```{r}
+library(readr)
+X107indicators <- read_csv("107indicators.csv", 
+                           locale = locale(), na = "NA")
+save(X107indicators, file = "X107indicators.rda")
+```
