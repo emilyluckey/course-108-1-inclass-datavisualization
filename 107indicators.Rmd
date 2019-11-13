@@ -1,6 +1,10 @@
 ```{r}
-library(readr)
-X107indicators <- read_csv("107indicators.csv", 
-                           locale = locale(), na = "NA")
-save(X107indicators, file = "X107indicators.rda")
+library(dplyr)
+library(googlesheets)
+gs_auth()
+gs_key("1FgvleD5sWDLmRkap3ptMgGlOcivaYEMWUo5VFifoi64") %>%
+  gs_read() -> myth_of_love
+myth_of_love[,-c(12:14)] %>%
+  .[,-1] -> myth_of_love
+save(myth_of_love,file = "myth_of_love107.rda")
 ```

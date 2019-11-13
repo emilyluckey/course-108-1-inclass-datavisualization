@@ -1,0 +1,82 @@
+---
+title: "每週一圖作業資料檔"
+output: html_document
+params:
+  組員: ["李靜怡"]  
+  學號: ["410773095"]
+---
+
+#### 環境設定
+
+以下為老師執行時一定會存在的環境設定
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+rm(list=ls())
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(colorspace); library(grDevices); library(shiny); library(shinyjs); library(scales)
+library(tidyr); library(showtext); library(tidyverse); library(colorspace); library(magick); library(magrittr)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(fig.align='center', fig.showtext=T)
+```
+
+#### 資料處理
+  
+```{r data cleaning, echo=TRUE, eval=T}
+Graphdata <- list()
+
+data.frame(
+  name = c("自信","耐力","好強","少女心","細心",NA),
+  x = c(5*0.9*cos(90*3.14/180),5*0.5*cos(162*3.14/180),
+        5*0.7*cos(234*3.14/180),5*0.8*cos(306*3.14/180),
+        5*0.3*cos(18*3.14/180),5*0.9*cos(90*3.14/180)),
+  y = c(5*0.9*sin(90*3.14/180),5*0.5*sin(162*3.14/180),
+        5*0.7*sin(234*3.14/180),5*0.8*sin(306*3.14/180),
+        5*0.3*sin(18*3.14/180),5*0.9*sin(90*3.14/180))
+  ) -> Graphdata$personality
+
+data.frame(
+  x = c(5*cos(90*3.14/180),5*cos(162*3.14/180),
+        5*cos(234*3.14/180),5*cos(306*3.14/180),
+        5*cos(18*3.14/180),5*cos(90*3.14/180)),
+  y = c(5*sin(90*3.14/180),5*sin(162*3.14/180),
+        5*sin(234*3.14/180),5*sin(306*3.14/180),
+        5*sin(18*3.14/180),5*sin(90*3.14/180))
+) -> Graphdata$pentagon
+
+data.frame(
+  x = c(5.5*cos(90*3.14/180),5.5*cos(162*3.14/180),
+        5.5*cos(234*3.14/180),5.5*cos(306*3.14/180),
+        5.5*cos(18*3.14/180),5.5*cos(90*3.14/180)),
+  y = c(5.5*sin(90*3.14/180),5.5*sin(162*3.14/180),
+        5.5*sin(234*3.14/180),5.5*sin(306*3.14/180),
+        5.5*sin(18*3.14/180),5.5*sin(90*3.14/180))
+) -> Graphdata$pentagon_name
+
+data.frame(
+   name = c("室內","戶外","靜態","動態"),
+   x = c(0,0,-6,6),
+   y = c(-3,3,0,0)
+) -> Graphdata$hobbies$characteristic
+
+data.frame(
+  name = c("桌球","畫畫","料理","吸貓","逛街",
+           "裙子","看小說","睡覺","cosplay","看動畫"),
+  x = c(4,-2,2,0,4,-3,-4.5,-5,5,-4.5),
+  y = c(-2.3,-2,-2.5,-0.5,2,0.2,0,-2.8,1,-1.5)
+) -> Graphdata$hobbies$act
+
+data.frame(
+  name = c("姓名: 林夕","稱號: Master of Princess Syndrome",
+           "星座: 水瓶座",
+           "角色介紹:\n因為是螞蟻國人所以拒絕吃有苦味的東西，\n因為各種原因被朋友說很像胖丁，\n會強行用經濟學和會計學解釋自己正當和不正當的消費，\n沒有飲料會死掉的物種。"),
+  x = c(0,0,0,0),
+  y = c(4,3,2,1)
+) -> Graphdata$data
+
+image_read("https://gss0.baidu.com/9vo3dSag_xI4khGko9WTAnF6hhy/zhidao/pic/item/6a63f6246b600c33d665061b114c510fd8f9a1c1.jpg") %>%
+  as.raster() -> Graphdata$photo
+
+save(Graphdata, file = "Graphdata.rda")
+```
+

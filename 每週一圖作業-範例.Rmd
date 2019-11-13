@@ -35,65 +35,84 @@ knitr::opts_chunk$set(out.width='80%', fig.asp=.75, fig.align='center', fig.show
   * 作圖用資料物件生成(最後形成作圖資料物件graphData)
   
 ```{r data cleaning, echo=TRUE, eval=T}
-load("X107indicators.Rda")
+load("myth_of_love107.rda")
 graphData <- list()
 
-X107indicators[-c(35:36),] %>%
-  .[-c(1:2),] %>%
-  .[,-2] %>%
-  gather(
-    -1,
-    key = 各級學校, value = 平均每生分攤經費
-  ) -> graphData$X107indicators
+ifelse(
+  myth_of_love$至今交往經驗 == "有",
+  T,F
+) -> myth_of_love$至今交往經驗
 
-graphData$X107indicators$學年度 %<>% as.numeric()
-graphData$X107indicators$平均每生分攤經費 %<>% as.numeric()
+myth_of_love[,-7] %>%
+  .[,-9]  -> graphData$myth_of_love
+
+graphData$myth_of_love %>%
+  group_by(
+    `你個人認為交往多長時間可以發生性行為?`,
+    `你認為大學生交往多長時間願意發生性行為?`
+  ) %>%
+  summarise(
+    總人數百分比 = n()/nrow(myth_of_love),
+    交往經驗比 = sum(至今交往經驗)/n(),
+    交往經驗 = sum(至今交往經驗),
+    人數 = n()
+  ) -> graphData$myth_of_love
 ```
 
 #### 繪圖程式
 
 ```{r graph, echo=T, eval=T}
-graphData$X107indicators %>%
-  ggplot()+
-  geom_line(
-    aes(x=學年度, y=平均每生分攤經費, color = 各級學校) 
+graphData$myth_of_love %>%
+  ggplot(
+    aes(x=`你個人認為交往多長時間可以發生性行為?`,
+        y=`你認為大學生交往多長時間願意發生性行為?`,
+        size = 總人數百分比,
+        alpha = 交往經驗比)
+  )+
+  geom_point() +
+  scale_size_area(
+    max_size = 10
   ) +
-  scale_color_discrete(breaks = c(
-    "大學及學院",
-    "專科學校",
-    "高中",
-    "高職",
-    "國中",
-    "國小",
-    "幼兒園")) +
-  labs(title = "各級學校平均每生分攤經費",
-       caption = "資料來源: 中華民國統計資訊網",
-       subtitle="單位：每人平均經費(元)") +
+  scale_y_discrete(
+    "認為普遍大學生交往多久願意發生性行為",
+    limits = c("交往前(曖昧期)","半年內","一年內",
+               "一年以上","無論多久都不行")
+  ) +
+  scale_x_discrete(
+    "個人認為交往多久可以發生性行為",
+    limits = c("交往前(曖昧期)","半年內","一年內",
+               "一年以上","無論多久都不行")
+  ) +
+  geom_abline(intercept = 0,slope = 1,linetype="dashed",
+              alpha = 0.3,size = 1) +
+  labs(title = "大學生交往與性行為發生時間認知差異",
+       caption = "資料來源: 我大一社會學報告問卷",
+       subtitle="對群體認知v.s個人認知") +
   theme(
     plot.title = element_text(size = 18, hjust = 0.5),
     plot.caption = element_text(size = 10,
                                 color = "#6D6D6D"),
     plot.subtitle = element_text(size = 10),
-    panel.grid.major = element_line(color = "grey90"),
-    panel.grid.minor = element_line(color = "grey90")
+    legend.position = "none",
+    aspect.ratio = 1/1.3
   ) +
-  geom_hline(aes(yintercept=100000),
-             alpha=0.3,linetype="dashed") +
-  geom_vline(aes(xintercept=97),
-             alpha=0.3,linetype="dashed") +
-  scale_y_continuous(
-    breaks = c(50000,100000,150000,200000),
-    labels = c("50,000","100,000","150,000","200,000")
-  ) ->finalplot
+  annotate(
+    "text",x=5,y=1,size=3,
+    label = paste("認為他人願意發生\n性行為時間較自己早")
+  ) +
+  annotate(
+    "text",x=1.3,y=5,size=3,
+    label = paste("認為自己願意發生\n性行為時間較他人早")
+  ) -> finalplot
 finalplot
 ```
 
 #### 設計說明
 說明想傳達的訊息（必要）及設計想法（非必要）。寫在***之後
 *** 
-此圖為75學年度以後各級學校平均學生分攤經費(各級學校平均每生分攤經費＝各級學校教育經費支出預算數/各級學校學生人數)，可以看到大學及學院一直都是平均經費最多的，但專科學校的經費和其他各級學校相比並不突出，令人意外的是高職的人均經費長年以來皆高過高中，其原因有待進一步了解。
+此圖107學年度調查台北大學大學生對於交往時間與性行為發生時間的認知差異，輔助線上的點是個人認知和對群體認知相同的狀況，以點的大小表示人數、深淺代表該點的樣本中有交往經驗者的百分比。
 
-有趣的是在97學年度，專科學校、高中、國小及幼兒園的人均經費出現了交叉口。
+可以發現大多數人自我認知中大學生願意發生性行為的時間較自己早，但若從是否有交往經驗的角度來看反而是無交往經驗者較傾向自己願意發生性行為的時間較他人晚，或者可以說無交往經驗者普遍認為自己在整個大學生群體中對於性行為是相對保守的。
 
 ```{r}
 finalplot %>%

@@ -5,7 +5,7 @@ date: "9/25/2019"
 ---
 
 ```{r}
-library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext)
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(tidyr); library(showtext); library(magrittr)
 
 font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
 showtext_auto(enable=TRUE) #啟用字體
@@ -368,5 +368,418 @@ df_x %>%
 df_x %>%
   ggplot(aes(x=x))+
   geom_histogram(bins=8)
+```
+
+```{r}
+df_position <- data.frame(
+  x=rep(c("a","b"), each=3),
+  y=c(3,1,3,8,6,10)
+)
+
+graphList <- list()
+
+df_position %>%
+  ggplot(aes(x=x,y=y))+
+  geom_point(
+    color="#5A99B3"
+  ) + 
+  scale_y_continuous(
+    breaks=c(1,3,6,8,10)
+  )+
+  annotate(
+    geom="text",
+    x=1.1, y=3, label="x 2" # 利用factor的type為integer的特質設x位置
+  )+
+  labs(
+    title="Position identity",
+    subtitle="Position沒有調整"
+    ) -> graphList$position_none
+
+graphList$position_none
+
+df_position %>%
+  ggplot(aes(x=x,y=y,color=y))+
+  geom_point(
+    position="stack", color="#5A99B3"
+  )+
+  labs(
+    title= "Position stack",
+    subtitle = "各x類y值疊加上去" 
+  )-> graphList$position_stack
+
+ggpubr::ggarrange(
+  graphList$position_none,
+  graphList$position_stack
+)
+```
+
+```{r}
+library(readr)
+df_geo_northTW <- read_csv("https://www.dropbox.com/s/6uljw24zkyj7avs/df_geo_northTW.csv?dl=1")
+```
+
+```{r}
+ggplot()+theme_linedraw()+
+  scale_x_continuous(limits=c(120,123),breaks=120:123,
+                     expand=expand_scale(add=c(0,0)))+
+  scale_y_continuous(limits=c(24,26),breaks=24:26,
+                     expand=expand_scale(mult = c(0,0))) ->
+  myGrids
+
+myGrids
+
+df_geo_northTW %>%
+  filter(
+    COUNTYNAME == c("新北市","臺北市")
+  ) %>%
+  ggplot(
+    aes(
+      x=x, y=y
+    )
+  ) +
+  geom_polygon() +
+  theme_linedraw()+
+  geom_path(
+    data=data.frame(
+      x=c(121.55,121.7,121.9),
+      y=c(25.1,24.7,24.7)
+      ),
+    aes(x=x,y=y)
+    ) +
+  annotate(
+    "text",
+    x=121.9,y=24.71,label="這是臺北市",
+    vjust=0
+  ) -> list_graphs$northTW
+  
+  
+```
+
+```{r}
+library(magick)
+image_read("https://mir-s3-cdn-cf.behance.net/project_modules/max_1200/2450df20386177.562ea7d13f396.jpg") -> taipei101
+
+taipei101 %>%
+  image_info() -> taipei101_info
+
+list_graphs <- list()
+
+theme_linedraw()+
+  theme(
+    panel.background = element_rect(fill="cyan4")
+  ) -> list_graphs$theme_backgroundCheck
+
+# 圖片底色非透明
+taipei101 %>%
+  image_ggplot()+
+  list_graphs$theme_backgroundCheck
+
+image_fill(
+  taipei101, "transparent", point = "+100+100", fuzz = 30
+  ) %>% # fuzz=對邊界定義模糊度 %>%
+    image_ggplot()+list_graphs$theme_backgroundCheck
+
+image_fill(taipei101,"transparent", point = "+100+100", fuzz=30) -> 
+  taipei101transparent
+
+##transparent = 去背透明圖層
+
+taipei101transparent %>%
+  as.raster() ->
+  raster_taipei101
+
+##raster = rgb矩陣
+
+loc <- c(lon=121.5622782,lat=25.0339687) # Taipei101 經緯度
+imgWidth <- 0.13 # Taipei101在圖片佔寬
+# 檢視圖片高寬比
+taipei101_info$height/taipei101_info$width -> img_asp
+
+list_graphs$northTW +
+  annotation_raster(raster_taipei101,
+                    loc[1]-imgWidth/2,loc[1]+imgWidth/2,
+                    loc[2]-imgWidth/2*img_asp,
+                    loc[2]+imgWidth/2*img_asp)
+
+```
+
+```{r}
+colnames(transcript100to106withLocation) %<>% 
+  `Encoding<-`("UTF-8")
+
+grade %>%
+  .[.$學號=="410078054",] %>%
+  rbind(
+    grade[grade$學號 == "410073060",]
+  ) %>%
+  rbind(
+    grade[grade$學號 == "410077058",]
+  ) %>%
+  .[,-c(2:3)] -> gradeData
+
+save(gradeData, file = "gradeData.rda")
+
+names(transcriptList) %<>% `Encoding<-`("UTF-8")
+```
+
+```{r}
+transcript100to106withLocation %>%
+  .[.$`必選修類別（必／選／通）` == "通",] %>%
+  rbind(
+    transcript100to106withLocation[grepl("體育：",transcript100to106withLocation$科目名稱),]
+  ) -> transcript100to106withPEandGeneral
+
+transcript100to106withPEandGeneral[transcript100to106withPEandGeneral$每週 == "一",24] <- 1
+transcript100to106withPEandGeneral[transcript100to106withPEandGeneral$每週 == "二",24] <- 2
+transcript100to106withPEandGeneral[transcript100to106withPEandGeneral$每週 == "三",24] <- 3
+transcript100to106withPEandGeneral[transcript100to106withPEandGeneral$每週 == "四",24] <- 4
+transcript100to106withPEandGeneral[transcript100to106withPEandGeneral$每週 == "五",24] <- 5
+
+as.numeric(str_sub(transcript100to106withPEandGeneral$每週時間,1,1)) -> transcript100to106withPEandGeneral$開始
+as.numeric(str_sub(transcript100to106withPEandGeneral$每週時間,-1,-1)) -> transcript100to106withPEandGeneral$結束
+
+
+
+transcript100to106withPEandGeneral %>%
+  filter(
+    學年 == 103, 學屆 == 103,
+    `必選修類別（必／選／通）` == "必",
+    學系 == "經濟學系"
+  ) %>% 
+  ggplot(aes(x=每週,y=開始)) +
+  geom_tile(
+    alpha = 0.1
+  ) +
+  scale_y_continuous(
+    trans = "reverse"
+  )
+```
+
+```{r}
+graphListD$myGrade %>% 
+  ggplot() + 
+  geom_bar(
+    mapping = aes(
+      x = 學年期, 
+      y = 總修學分
+    ), 
+    stat = "identity", 
+    width = 0.6, 
+    fill = "#AAAAAA"
+  ) + 
+  geom_bar(
+    mapping = aes(
+      x = 學年期, 
+      y = 實得學分, 
+      fill = 學位
+    ), 
+    stat = "identity", 
+    width = 0.6
+  ) -> 
+  graphListP$myCredit_base
+qualitative_hcl(n = 2, h = c(-140, 0), c = 100, l = 60, register = "godPalette_2Qua")
+
+graphListP$myCredit_base + 
+  scale_fill_discrete_qualitative(palette = "godpalette_2Qua", nmax = 2, rev = F) + 
+  #顛倒顏色要在這下
+  scale_y_continuous(
+    limits = c(0,55), 
+    expand = expand_scale(add = c(0, 0))
+  ) + 
+  theme_bw() -> 
+  graphListP$myCredit_1
+graphListP$myCredit_1 + 
+  geom_path(
+    mapping = aes(
+      x = 學年期, 
+      y = 歷年成績 - 45, 
+      group = "a"   #須宣告所有資料為一群
+    ), 
+    color = "#DCDCDC", 
+    size = 2
+  ) + 
+  geom_point(
+    mapping = aes(
+      x = 學年期, 
+      y = 歷年成績 - 45, 
+      color = 學位
+    ), 
+    size = 2
+  ) + 
+  geom_text(
+    mapping = aes(
+      x = 學年期, 
+      y = 歷年成績 - 44, 
+      label = 歷年成績, 
+      color = 學位
+    ), 
+    vjust = 0, 
+    size = 3
+  ) + 
+  scale_color_discrete_qualitative(palette = "godpalette_2Qua", nmax = 2, rev = F) -> 
+  graphListP$myCredit_2
+graphListP$myCredit_2 + 
+  #調整legend
+  theme(
+    legend.position = c(0.1, 0.85), 
+    legend.background = element_blank(), 
+    legend.title = element_blank(), 
+    legend.key.size = unit(0.8, "cm")
+  ) + 
+  #清理輔助線
+  theme(
+    panel.border = element_blank(), 
+    panel.grid.minor = element_blank(), 
+    panel.grid.major.x = element_blank()
+  ) + 
+  #清理格線
+  theme(
+    axis.title = element_blank(), 
+    axis.ticks = element_blank(), 
+    axis.text.y = element_blank()
+  ) -> 
+  graphListP$myCredit_3
+graphListP$myCredit_3 + 
+  geom_hline(
+    yintercept = 0
+  ) + 
+  geom_hline(
+    yintercept = 20, 
+    color = "red", 
+    linetype = "58"
+  ) + 
+  geom_hline(
+    yintercept = 35, 
+    color = "red", 
+    linetype = "58"
+  ) + 
+  annotate(
+    "text", x = "大一上", y = 21, 
+    label = "20學分", 
+    color = "red", 
+    hjust = 0.6, 
+    vjust = 0
+  ) + 
+  annotate(
+    "text", x = "碩一下", y = 36, 
+    label = "80分", 
+    color = "red", 
+    hjust = 0, 
+    vjust = 0
+  ) -> 
+  graphListP$myCredit_4
+graphListP$myCredit_4 + 
+  labs(
+    title = "歷年學業表現", 
+    subtitle = "學分數與成績趨勢"
+  ) + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 20), 
+    plot.subtitle = element_text(hjust = 0.5, color = "#888888"), 
+    aspect.ratio = 1/1.414, 
+    axis.text.x = element_text(color = "black")
+  ) -> 
+  graphListP$mycredit_end
+```
+
+```{r}
+library(sf)
+
+outer <-     
+  rbind( # 外圍
+    c(1,5),
+    c(2,1),
+    c(5,1),
+    c(5,5),
+    c(1,5)) # 必需自行輸入起點close it
+
+hole <-
+  rbind( # 洞
+    c(2,4),
+    c(3,2),
+    c(4,3),
+    c(2,4))  # 必需自行輸入起點close it
+  
+poly <- st_polygon(
+  list(
+    outer, 
+    hole
+  )
+) 
+
+poly %>% ggplot()+geom_sf()
+
+
+outer2 <- outer + 12
+hole2 <- hole + 12
+
+mpoly <- st_multipolygon(
+  list(
+    list(
+      outer,
+      hole
+    ),
+    list(
+      outer2,
+      hole2
+    )
+  )
+) 
+
+mpoly %>% ggplot()+geom_sf()
+
+
+mline <- st_multilinestring(
+  list(
+    rbind(
+      c(1,0),
+      c(2,3),
+      c(-1,3)),
+    rbind(
+      c(-2,3),
+      c(-1,-1))
+    )
+  )
+
+mline %>% ggplot()+geom_sf()
+
+
+st_geometrycollection(
+  list(
+    mline,
+    poly, mpoly
+  )
+) %>% ggplot()+ geom_sf()
+```
+
+```{r}
+sfg_county1 <- st_polygon(list(
+  outer,hole
+))
+sfg_county2 <- st_polygon(list(
+  outer2, hole2
+))
+
+sfc_county12column <- st_sfc(sfg_county1,sfg_county2)
+
+sfc_county12column %>% ggplot+geom_sf()
+
+
+sfc_county12column %>%
+  st_set_crs(4326) -> # EPSG: 4326
+  sfc_county12column
+
+df_county12 <- data.frame(
+  name=c("county1","county2"),
+  population=c(100,107)
+)
+
+df_county12 %>%
+  st_set_geometry(sfc_county12column) -> df_county12
+
+df_county12 %>% names
+
+dir.create("county12")
+write_sf(df_county12,"county12/county12.shp")
 ```
 

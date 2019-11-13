@@ -1,0 +1,92 @@
+---
+title: "每週一圖作業"
+output: html_document
+params:
+  組員: ["李靜怡"]  
+  學號: ["410773095"]
+---
+
+#### 環境設定
+
+以下為老師執行時一定會存在的環境設定
+```{r basic setup, message=FALSE, echo=TRUE, eval=T}
+rm(list=ls())
+library(dplyr); library(stringr); library(ggplot2); library(plotly); library(lubridate); library(readr); library(colorspace); library(grDevices); library(shiny); library(shinyjs); library(scales)
+library(tidyr); library(showtext); library(tidyverse); library(colorspace); library(ggpubr)
+
+#font_add("QYuan","cwTeXQYuan-Medium.ttf") # 新增字體
+showtext_auto(enable=TRUE) #啟用字體
+theme_set(theme_classic())
+knitr::opts_chunk$set(fig.align='center', fig.showtext=T)
+```
+
+
+#### 繪圖程式
+
+```{r graph, echo=T, eval=T}
+load("Graphdata.rda")
+
+ggplot() +
+  geom_path(data = Graphdata$pentagon,
+            aes(x=x, y=y)) +
+  geom_polygon(data = Graphdata$personality,
+            aes(x=x, y=y),
+            fill = "#5B92B0",
+            alpha = 0.5) +
+  geom_text(
+    data = Graphdata$pentagon_name,
+    aes(x=x, y=y),
+    label = Graphdata$personality$name
+  ) +
+  theme_void() +
+  theme(aspect.ratio = 1/1) -> personality
+
+ggplot() +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_label(
+    data = Graphdata$hobbies$characteristic,
+    aes(x=x, y=y, label = name),
+    size = 7
+  ) +
+  geom_point(
+    data = Graphdata$hobbies$act,
+    aes(x=x, y=y)
+  ) +
+  geom_text(
+    data = Graphdata$hobbies$act,
+    aes(x=x, y=y, label = name),
+    vjust = 0,
+    nudge_y = 0.1
+  ) +
+  theme_void() -> hobbies
+
+ggplot() +
+  geom_text(
+    data = Graphdata$data,
+    aes(x=x, y=y, label = name),
+    hjust = 0,vjust = 1, size = 3
+  ) +
+  annotation_raster(
+    Graphdata$photo,
+    0,30,5,14
+  ) +
+  scale_x_continuous(limits = c(0,80)) +
+  scale_y_continuous(limits = c(-5,18)) +
+  theme_void() -> data
+
+ggarrange(
+  ggarrange(
+    data, personality,
+    ncol = 2, labels = c("角色資料","個性")
+  ),
+  ggarrange(hobbies, labels = "興趣"), nrow = 2
+) -> finalplot
+
+finalplot
+```
+
+#### 設計說明
+說明想傳達的訊息（必要）及設計想法（非必要）。寫在***下一行。
+*** 
+雷達圖代表個性，十字圖代表興趣
